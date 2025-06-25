@@ -1,9 +1,9 @@
-// next.config.mjs
+// next.config.js
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['media.istockphoto.com', 'images.unsplash.com'],
+     domains: ['images.unsplash.com', 'media.istockphoto.com'],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

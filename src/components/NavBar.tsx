@@ -18,7 +18,7 @@ export default function NavBar() {
        </div>
 
        {/* Bigger Screens */}
-       <div className='max-md:hidden flex items-center justify-between gap-8 h-full'>
+       <div className='mobile-to-lg:hidden flex items-center justify-between gap-8 h-full'>
           {/* Left */}
           <div className="w-1/3 xl:w-1/2 flex items-center gap-12">
            <Link href="/" className='flex items-center gap-3'>
