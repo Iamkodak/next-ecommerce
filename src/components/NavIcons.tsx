@@ -36,8 +36,8 @@ export default function NavIcons() {
         
         }
         <Bell className='cursor-pointer' />
-        <div className="relative cursor-pointer">
-            <ShoppingCart className='cursor-pointer' onClick={() => setIsCartOpen((prev) => !prev)}/>
+        <div className="relative cursor-pointer" onClick={() => setIsCartOpen((prev) => !prev)}>
+            <ShoppingCart className='cursor-pointer'/>
                 <div className="absolute -top-4 -right-4 w-6 h-6 bg-rogue rounded-full text-white text-sm flex items-center justify-center">2</div>
         </div>
             {isCartOpen && (

@@ -9,8 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@wix/bookings": "^1.0.918",
+    "@wix/sdk": "^1.15.23",
+    "@wix/stores": "^1.0.476",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "js-cookie": "^3.0.5",
+    "js-cookies": "^1.0.4",
     "lucide-react": "^0.516.0",
     "next": "^14.2.30",
     "react": "^18",
@@ -19,6 +24,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
