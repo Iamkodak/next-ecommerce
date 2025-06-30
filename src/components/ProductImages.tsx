@@ -3,56 +3,76 @@
 import React, { useState } from "react";
 import Image from "next/image";
 
-const images = [
-  {
-    id: 1,
-    url: "https://images.unsplash.com/photo-1750456729462-8f2da0dd441f?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
+interface ProductImage {
+  id: string | number;
+  url: string;
+}
 
-  {
-    id: 2,
-    url: "https://images.unsplash.com/photo-1750378112167-58d9d3788eef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
+interface ProductImagesProps {
+  mainImage?: string;
+  additionalImages?: string[];
+}
 
-  {
-    id: 3,
-    url: "https://images.unsplash.com/photo-1750337361912-bfa9b786610d?q=80&w=686&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
+export default function ProductImages({ 
+  mainImage, 
+  additionalImages = [] 
+}: ProductImagesProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  {
-    id: 4,
-    url: "https://plus.unsplash.com/premium_photo-1750792817723-be3f7b09b227?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-];
+  // Combine all images (main + additional)
+  const allImages: ProductImage[] = [
+    ...(mainImage ? [{ id: 'main', url: mainImage }] : []),
+    ...additionalImages.map((url, index) => ({ 
+      id: `additional-${index}`, 
+      url 
+    }))
+  ];
 
-export default function ProductImages() {
-
-     const [index, setIndex] = useState(0);
+  // Fallback if no images are provided
+  if (allImages.length === 0) {
+    return (
+      <div className="h-[500px] relative bg-gray-100 rounded-md flex items-center justify-center">
+        <span className="text-gray-500">No images available</span>
+      </div>
+    );
+  }
 
   return (
     <div className="">
+      {/* Main image display */}
       <div className="h-[500px] relative">
         <Image
-          src={images[index].url}
-          alt=""
+          src={allImages[activeIndex].url}
+          alt={`Product image ${activeIndex + 1}`}
           fill
           sizes="50vw"
           className="object-cover rounded-md"
+          priority
         />
       </div>
-      <div className="flex justify-between gap-4 mt-8 cursor-pointer">
-        {images.map((img, i )=> (
-            <div className="w-1/4 relative h-32 gap-4 mt-8" key={img.id} onClick={() =>setIndex(i)}>
-          <Image
-            src={img.url}
-            alt=""
-            fill
-            sizes="30vw"
-            className="object-cover rounded-md"
-          />
+
+      {/* Thumbnail navigation */}
+      {allImages.length > 1 && (
+        <div className="flex justify-between gap-4 mt-8">
+          {allImages.map((img, index) => (
+            <div 
+              className={`w-1/4 h-32 relative rounded-md overflow-hidden cursor-pointer border-2 ${
+                activeIndex === index ? 'border-blue-500' : 'border-transparent'
+              }`}
+              key={img.id}
+              onClick={() => setActiveIndex(index)}
+            >
+              <Image
+                src={img.url}
+                alt={`Thumbnail ${index + 1}`}
+                fill
+                sizes="30vw"
+                className="object-cover"
+              />
+            </div>
+          ))}
         </div>
-        ))}
-        </div>
-      </div>
+      )}
+    </div>
   );
 }

@@ -5,7 +5,8 @@ const nextConfig = {
     domains: [
       "images.unsplash.com",
       "media.istockphoto.com",
-      "plus.unsplash.com", // 👈 Add this line
+      "plus.unsplash.com",
+      "static.wixstatic.com", // 👈 Add this line
     ],
   },
 };
