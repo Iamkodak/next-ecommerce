@@ -5,11 +5,11 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { useWixClient } from "./wixContext";
 
-// Define types based on Wix SDK structure
 interface LineItem {
   _id: string;
   productName?: string;
@@ -58,24 +58,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const cartCount = cart?.lineItems?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true);
       const cartData = await (wixClient as any).currentCart.getCurrentCart();
       setCart(cartData);
       setError(null);
     } catch (err: any) {
-      // Handle different error cases gracefully
-      if (err?.details?.applicationError?.code === 428) {
-        // User not authenticated - set empty cart
+      if (
+        err?.details?.applicationError?.code === 428 ||
+        err?.details?.applicationError?.code === "OWNED_CART_NOT_FOUND"
+      ) {
         setCart({ lineItems: [] });
         setError(null);
-        console.log("User not authenticated, using empty cart");
-      } else if (err?.details?.applicationError?.code === "OWNED_CART_NOT_FOUND") {
-        // No cart exists yet - this is normal, set empty cart
-        setCart({ lineItems: [] });
-        setError(null);
-        console.log("No cart found, starting with empty cart");
+        console.log("Empty cart initialized");
       } else {
         setError("Failed to load cart");
         console.error("Cart fetch error:", err);
@@ -83,13 +79,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [wixClient]);
 
   const createCartIfNeeded = async () => {
     try {
-      // Try to create a new cart
-      const newCart = await (wixClient as any).currentCart.createCart();
-      return newCart;
+      return await (wixClient as any).currentCart.createCart();
     } catch (err) {
       console.error("Failed to create cart:", err);
       return null;
@@ -99,8 +93,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addToCart = async (productId: string) => {
     try {
       setIsLoading(true);
-      
-      // First, try to add to current cart
       try {
         await (wixClient as any).currentCart.addToCurrentCart({
           lineItems: [
@@ -114,10 +106,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           ],
         });
       } catch (addError: any) {
-        // If cart doesn't exist, create one first
         if (addError?.details?.applicationError?.code === "OWNED_CART_NOT_FOUND") {
           await createCartIfNeeded();
-          // Try adding again after creating cart
           await (wixClient as any).currentCart.addToCurrentCart({
             lineItems: [
               {
@@ -133,15 +123,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           throw addError;
         }
       }
-      
       await fetchCart();
       setCartVisible(true);
     } catch (err: any) {
-      if (err?.details?.applicationError?.code === 428) {
-        setError("Please log in to add items to cart");
-      } else {
-        setError("Failed to add item to cart");
-      }
+      setError(
+        err?.details?.applicationError?.code === 428
+          ? "Please log in to add items to cart"
+          : "Failed to add item to cart"
+      );
       console.error("Add to cart error:", err);
     } finally {
       setIsLoading(false);
@@ -151,7 +140,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const removeFromCart = async (lineItemId: string) => {
     try {
       setIsLoading(true);
-      await (wixClient as any).currentCart.removeLineItemsFromCurrentCart([lineItemId]);
+      await (wixClient as any).currentCart.removeLineItemsFromCurrentCart([
+        lineItemId,
+      ]);
       await fetchCart();
     } catch (err) {
       setError("Failed to remove item from cart");
@@ -166,7 +157,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       await removeFromCart(lineItemId);
       return;
     }
-
     try {
       setIsLoading(true);
       await (wixClient as any).currentCart.updateCurrentCartLineItemQuantity([
@@ -192,7 +182,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
   return (
     <CartContext.Provider
