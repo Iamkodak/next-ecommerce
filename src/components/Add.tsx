@@ -1,38 +1,38 @@
 "use client";
 
 import React, { useState } from "react";
+import { useCart } from "@/context/CartContext";
 
 interface AddProps {
   productId: string;
-  initialStock?: number;
+  variantId?: string;
+  stockNumber?: number;
 }
 
-export default function Add({ productId, initialStock = 4 }: AddProps) {
+export default function Add({ 
+  productId, 
+  variantId = "00000000-0000-0000-0000-000000000000", 
+  stockNumber = 0 
+}: AddProps) {
   const [quantity, setQuantity] = useState(1);
-  const [isAdding, setIsAdding] = useState(false);
+  const { addToCart, isLoading } = useCart();
 
   const handleQuantity = (type: "i" | "d") => {
     if (type === "d" && quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
 
-    if (type === "i" && quantity < initialStock) {
+    if (type === "i" && quantity < stockNumber) {
       setQuantity((prev) => prev + 1);
     }
   };
 
   const handleAddToCart = async () => {
-    setIsAdding(true);
     try {
-      // Add your cart logic here using productId and quantity
-      console.log(`Adding ${quantity} of product ${productId} to cart`);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert(`${quantity} item(s) added to cart!`);
+      // Add to cart using the cart context
+      await addToCart(productId);
     } catch (error) {
       console.error("Error adding to cart:", error);
-    } finally {
-      setIsAdding(false);
     }
   };
 
@@ -53,25 +53,25 @@ export default function Add({ productId, initialStock = 4 }: AddProps) {
             <button
               className="cursor-pointer text-xl disabled:opacity-50"
               onClick={() => handleQuantity("i")}
-              disabled={quantity >= initialStock}
+              disabled={quantity >= stockNumber}
             >
               +
             </button>
           </div>
-          {initialStock > 0 && (
+          {stockNumber > 0 && (
             <div className="text-xs">
-              Only <span className="text-orange-400">{initialStock} items</span>{" "}
+              Only <span className="text-orange-400">{stockNumber} items</span>{" "}
               left! <br />
               {"Don't"} miss it
             </div>
           )}
         </div>
         <button
-          className="w-36 rounded-3xl ring-1 text-sm ring-rogue text-rogue py-2 px-4 hover:bg-rogue hover:text-white disabled:cursor-not-allowed disabled:bg-pink-200 disabled:text-white disabled:ring-none"
+          className="w-36 rounded-3xl ring-1 text-sm ring-indigo-600 text-indigo-600 py-2 px-4 hover:bg-indigo-600 hover:text-white disabled:cursor-not-allowed disabled:bg-pink-200 disabled:text-white disabled:ring-none transition-all duration-300"
           onClick={handleAddToCart}
-          disabled={isAdding || initialStock <= 0}
+          disabled={isLoading || stockNumber <= 0}
         >
-          {isAdding ? "Adding..." : "Add To Cart"}
+          {isLoading ? "Adding..." : "Add To Cart"}
         </button>
       </div>
     </div>

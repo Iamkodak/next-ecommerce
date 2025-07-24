@@ -4,6 +4,7 @@ import "./globals.css";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { WixClientContextProvider } from "@/context/wixContext";
+import { CartProvider } from "@/context/CartContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +22,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <WixClientContextProvider>
-        <NavBar/>
-        {children}
-        <Footer/>
+          <CartProvider>
+            <NavBar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <Footer />
+          </CartProvider>
         </WixClientContextProvider>
-        </body>
+      </body>
     </html>
   );
 }

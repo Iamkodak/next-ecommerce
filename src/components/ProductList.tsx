@@ -5,6 +5,9 @@ import { createClient, OAuthStrategy } from "@wix/sdk";
 import { products } from "@wix/stores";
 import { wixClient } from "@/lib/wixClient";
 import DOMPurify from "isomorphic-dompurify";
+import QuickAdd from "./QuickAdd";
+import { getStockNumber, isInStock } from "@/utils/stock";
+import StockDebug from "./StockDebug";
 
 const PRODUCT_PER_PAGE = 20;
 
@@ -12,10 +15,12 @@ export default async function ProductList({
   categoryId,
   limit,
   searchParams,
+  sortBy = "lastUpdated", // Add sortBy parameter with default
 }: {
-  categoryId: string;
-  limit: number;
-  searchParams?:any;
+  categoryId?: string; // Make categoryId optional
+  limit?: number; // Make limit optional
+  searchParams?: any;
+  sortBy?: "lastUpdated" | "name" | "price";
 }) {
   const wixClient = createClient({
     modules: { products },
@@ -24,11 +29,41 @@ export default async function ProductList({
     }),
   });
 
-  const productList = await wixClient.products
-    .queryProducts()
-    .eq("collectionIds", categoryId)
-    .limit(limit || PRODUCT_PER_PAGE)
-    .find();
+  let query = wixClient.products.queryProducts();
+  
+  // Only filter by category if categoryId is provided and not empty
+  if (categoryId && categoryId.trim() !== "") {
+    query = query.eq("collectionIds", categoryId);
+  }
+  
+  // Set limit (default to PRODUCT_PER_PAGE if not specified)
+  const productLimit = limit && limit > 0 ? limit : PRODUCT_PER_PAGE;
+  query = query.limit(productLimit);
+  
+  // Add sorting - for new products, sort by last updated date descending
+  if (sortBy === "lastUpdated") {
+    query = query.descending("lastUpdated");
+  } else if (sortBy === "name") {
+    query = query.ascending("name");
+  } else if (sortBy === "price") {
+    query = query.ascending("priceData.price");
+  }
+  
+  const productList = await query.find();
+
+  // Debug: Log the first product to see its structure
+  if (productList.items.length > 0) {
+    console.log('ProductList - First product data:', JSON.stringify(productList.items[0], null, 2));
+    console.log('ProductList - Stock info:', productList.items[0].stock);
+    const sanitizedStock = productList.items[0].stock && productList.items[0].stock.quantity === null
+      ? { ...productList.items[0].stock, quantity: undefined }
+      : productList.items[0].stock;
+    console.log('ProductList - Stock number:', getStockNumber(sanitizedStock));
+    console.log('ProductList - Is in stock:', isInStock(sanitizedStock));
+  } else {
+    console.log('ProductList - No products found');
+  }
+
   return (
     <div className="mt-12 flex gap-x-8 gap-y-16 justify-between flex-wrap">
       {productList.items.map((product: products.Product) => (
@@ -73,11 +108,17 @@ export default async function ProductList({
               }}
             ></div>
           )}
-          <button className="rounded-2xl ring-1 ring-rogue text-rogue w-max py-2 px-4 text-xs hover:bg-rogue hover:text-white">
-            Add to cart
-          </button>
+          <QuickAdd
+            productId={product._id!}
+            stockNumber={getStockNumber(product.stock && product.stock.quantity === null ? { ...product.stock, quantity: undefined } : product.stock)}
+          />
         </Link>
       ))}
+      {productList.items.length === 0 && (
+        <div className="w-full text-center py-8">
+          <p className="text-gray-500">No products found.</p>
+        </div>
+      )}
     </div>
   );
 }
